@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "xml2json_converter": {
+      "commandName": "Project"
+    }
+  }
+}
