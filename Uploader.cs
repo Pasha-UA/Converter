@@ -47,7 +47,7 @@ namespace ConverterProject
             //    Updated_fields = updated_fields ?? new[] { "quantity_in_stock", "price", "presence" };
         }
 
-        public static async Task<int> UploadData(string FileName, IConfiguration configuration)
+        public static async Task<int> UploadData(string FileName, string secretToken)
         {
             var stream = new StreamContent(File.OpenRead(FileName));
 
@@ -68,15 +68,12 @@ namespace ConverterProject
                 new StringContent(jsonAttributes)
             };
 
-            // Read the settings from the configuration
-            string token = configuration["uploadToken"];
             
-
             var uri = new Uri("https://my.prom.ua/api/v1/products/import_file");
 
             HttpClient client = new HttpClient();
 
-            client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+            client.DefaultRequestHeaders.Add("Authorization", "Bearer " + secretToken);
 
             Console.Write("Uploading file to server... ");
 

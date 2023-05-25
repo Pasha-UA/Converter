@@ -7,68 +7,45 @@ internal class Program
 {
     private static async Task<int> Main(string[] args)
     {
-        var rootCommand = CreateRootCommand();
-        return await rootCommand.InvokeAsync(args);
-    }
-
-    private static RootCommand CreateRootCommand()
-    {
         IConfiguration configuration = new ConfigurationBuilder()
              .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
              .AddJsonFile("secrets.json", optional: true, reloadOnChange: true)
              .Build();
 
+        var rootCommand = CreateRootCommand(configuration);
+
+        return await rootCommand.InvokeAsync(args);
+    }
+
+    private static RootCommand CreateRootCommand(IConfiguration configuration)
+    {
         var rootCommand = new RootCommand();
 
-        var inputCmlNameOption = new Option<string>
-            (
-            name: "--input",
-            description: "File with input data",
-            getDefaultValue: () => Defaults.DefaultInputFileName
-            );
-        inputCmlNameOption.AddAlias("-i");
+        var inputCmlNameOption = CreateOption<string>("--input", "File with input data", Defaults.DefaultInputFileName, "-i");
+        var outputXmlNameOption = CreateOption<string>("--output", "Output file name", Defaults.DefaultOutputFileName, "-o");
+        var parametersOption = CreateOption<string>("--parameters", "File with import parameters", "params.json", "-p");
+        var secretTokenOption = CreateOption<string>("--secret-token", "Secret token for uploading file. Default token you can save in the 'secrets.json' file.", null, "-st");
+        var convertOnlyOption = CreateOption<bool>("--convert-only", "Convert file only. Do not upload", false, "-co");
+        var uploadCommand = new Command("upload", "Upload previously prepared file.");
+
         rootCommand.Add(inputCmlNameOption);
-
-        var outputXmlNameOption = new Option<string>
-            (
-            name: "--output",
-            description: "Output file name",
-            getDefaultValue: () => Defaults.DefaultOutputFileName
-            );
-        outputXmlNameOption.AddAlias("-o");
         rootCommand.Add(outputXmlNameOption);
-
-        var parametersOption = new Option<string>
-            (
-            name: "--parameters",
-            description: "File with import parameters",
-            getDefaultValue: () => "params.json"
-            );
-        parametersOption.AddAlias("-p");
         rootCommand.Add(parametersOption);
-
-        var convertOnlyOption = new Option<bool>
-            (
-            name: "--convert-only",
-            description: "Convert file only. Do not upload",
-            getDefaultValue: () => false
-            );
-        convertOnlyOption.AddAlias("-co");
+        rootCommand.Add(secretTokenOption);
         rootCommand.Add(convertOnlyOption);
 
-        var uploadCommand = new Command("upload", "Upload previously prepared file.");
         rootCommand.AddCommand(uploadCommand);
 
         var uploadCommandArgument = new Argument<string>(name: "filename", getDefaultValue: () => "import_offers.xml", description: "File to upload");
         uploadCommand.AddArgument(uploadCommandArgument);
 
-        // -i "..\..\..\Data\instock.cml"
         rootCommand.SetHandler(async (context) =>
                 {
                     var inputFileName = context.ParseResult.GetValueForOption(inputCmlNameOption) ?? Defaults.DefaultInputFileName;
                     var outputFileName = context.ParseResult.GetValueForOption(outputXmlNameOption) ?? Defaults.DefaultOutputFileName;
                     var parameters = context.ParseResult.GetValueForOption(parametersOption);
                     var convertOnly = context.ParseResult.GetValueForOption(convertOnlyOption);
+                    var secretToken = context.ParseResult.GetValueForOption(secretTokenOption);
 
                     if (File.Exists(inputFileName))
                     {
@@ -78,7 +55,7 @@ internal class Program
 
                         if (!convertOnly)
                         {
-                            context.ExitCode = await Uploader.UploadData(outputFileName, configuration);
+                            context.ExitCode = await Uploader.UploadData(outputFileName, GetSecretToken(secretToken, configuration));
                         }
                     }
                     else
@@ -87,18 +64,53 @@ internal class Program
                         Console.WriteLine($"File {fullInputFileName} not found.");
                         context.ExitCode = -1;
                     }
-                    Console.WriteLine("Press ENTER to close program.");
-                    Console.Read();
+
+                    await WaitForEnterKeyPress();
                 });
 
         uploadCommand.SetHandler(async (context) =>
                 {
+                    var secretToken = context.ParseResult.GetValueForOption(secretTokenOption);
                     var fileToUpload = context.ParseResult.GetValueForArgument(uploadCommandArgument);
-                    context.ExitCode = await Uploader.UploadData(fileToUpload, configuration);
-                    Console.WriteLine("Press ENTER to close program.");
-                    Console.Read();
+                    context.ExitCode = await Uploader.UploadData(fileToUpload, GetSecretToken(secretToken, configuration));
+
+                    await WaitForEnterKeyPress();
                 });
 
         return rootCommand;
     }
+
+    private static Option<T> CreateOption<T>(string name, string description, object defaultValue, string alias = null)
+    {
+        var option = new Option<T>(name: name, description: description);
+
+        if (defaultValue != null)
+        {
+            option.SetDefaultValue(defaultValue);
+        }
+
+        if (!string.IsNullOrEmpty(alias))
+        {
+            option.AddAlias(alias);
+        }
+
+        return option;
+    }
+
+    private static string GetSecretToken(string token, IConfiguration configuration)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            token = configuration["uploadToken"];
+        }
+
+        return token;
+    }
+
+    private static async Task WaitForEnterKeyPress()
+    {
+        Console.WriteLine("Press ENTER to close program.");
+        await Task.Run(() => Console.ReadLine());
+    }
 }
+
