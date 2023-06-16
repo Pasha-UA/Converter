@@ -395,7 +395,7 @@ namespace ConverterProject
             if (File.Exists(outputFileName)) File.Delete(outputFileName);
             FileStream o = new FileStream(outputFileName, FileMode.Create);
             serializer.Serialize(o, priceList);
-            o.Close();
+            o.Close();  
 
             // add DOCTYPE string
             List<string> lines = File.ReadAllLines(outputFileName).ToList();
