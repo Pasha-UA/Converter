@@ -29,13 +29,16 @@ namespace ConverterProject
             public static string Deleted => nameof(Deleted).ToLower();
         }
 
-        private class AdditionalData
+        private class ImportParameters
         {
             public bool Force_update { get; set; } = false;
             public bool Only_available { get; set; } = false;
             public string Mark_missing_product_as { get; set; } = MissingProduct.Not_available;
+
             //[ name, sku, price, images_urls, presence, quantity_in_stock, description, group, keywords, attributes, discount, labels, gtin, mpn ]
+
             public string[] Updated_fields { get; set; } = new[] { "quantity_in_stock", "sku", "price", "presence", "description", "name" };
+
             //public string[] Updated_fields { get; set; } = new[] { "sku", "price", "description", "name" };
             //public AdditionalData(bool? force_update, bool? only_avaiable, string? mark_missing_as, string[]? updated_fields)
             //{
@@ -51,16 +54,16 @@ namespace ConverterProject
         {
             var stream = new StreamContent(File.OpenRead(FileName));
 
-            var options = new JsonSerializerOptions()
+            var serializerOptions = new JsonSerializerOptions()
             {
                 IncludeFields = true,
                 WriteIndented = true,
                 PropertyNamingPolicy = new LowerCaseNamingPolicy(),
             };
 
-            var data = new AdditionalData();
+            var importParameters = new ImportParameters();
 
-            var jsonAttributes = JsonSerializer.Serialize(data, typeof(AdditionalData), options);
+            var jsonAttributes = JsonSerializer.Serialize(importParameters, typeof(ImportParameters), serializerOptions);
 
             var content = new MultipartFormDataContent
             {
@@ -78,8 +81,10 @@ namespace ConverterProject
             Console.Write("Uploading file to server... ");
 
             var message = await client.PostAsync(uri, content);
-
+             
+            Console.ForegroundColor = message.StatusCode == System.Net.HttpStatusCode.OK ? ConsoleColor.Green : ConsoleColor.Red;
             Console.WriteLine(message.StatusCode);
+            Console.ResetColor();
 
             return (int)message.StatusCode;
         }

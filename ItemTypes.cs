@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -54,7 +55,7 @@ namespace ConverterProject
             public decimal Price { get; set; }
         }
 
-        public class OfferItem : BaseItem
+        private class OfferItem : BaseItem
         {
             public string CategoryId { get; set; }
             public string Name { get; set; }
@@ -75,8 +76,11 @@ namespace ConverterProject
 
         public class OffersItem : BaseItem // temporary class, replace main OfferItem class after debug is comlete
         {
-            [XmlElement(ElementName = "categoryId")]
+            [XmlElement(ElementName = "categoryId")] // родительская категория товаров
             public string CategoryId { get; set; }
+
+            [XmlAttribute(AttributeName = "group_id")]
+            public string GroupId { get; set; } // если товар с разновидностями, то это будет его основным id, а в поле id - уникальные разновидности
 
             [XmlElement(ElementName = "name")]
             public string Name { get; set; }
@@ -289,7 +293,7 @@ namespace ConverterProject
                             RetailPrice = prices.FirstOrDefault(p => p.IsRetail, null).Price,
                             RetailPriceCurrencyId = prices.FirstOrDefault(p => p.IsRetail, null).CurrencyId,
                             PriceItems = prices.Where(p => !p.IsRetail).Any() ? prices.Where(p => !p.IsRetail).ToArray() : null,
-                            SellingType = prices.Where(p => !p.IsRetail).Any() ? "u" : "r"
+//                            SellingType = prices.Where(p => !p.IsRetail).Any() ? "u" : "r"
 
                         };
                         offers.Add(item);
@@ -356,6 +360,7 @@ namespace ConverterProject
                                     item.PriceItems = null;
                                 }
                             }
+                            item.SellingType = item.PriceItems != null ? "u" : "r";
 
                             var pars = parameters.Where(p => String.Compare(p.Name, "Количество") != 0 && String.Compare(p.Name, "Наличие") != 0);
                             if (pars.Any())
