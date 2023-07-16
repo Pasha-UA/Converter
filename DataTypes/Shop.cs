@@ -16,8 +16,6 @@ namespace xml2json_converter.DataTypes
 {
     public class Shop
     {
-        private XmlDocument xmlDocument;
-        // private XmlNode rootNode;
         private Shop() // parameterless constructor is needed for serialization
         {
 
@@ -25,10 +23,10 @@ namespace xml2json_converter.DataTypes
 
         public Shop(string inputFileNameInStock = Defaults.DefaultInputFileName)
         {
-            xmlDocument = new XmlDocument();
-            xmlDocument.LoadXml(File.ReadAllText(inputFileNameInStock));
-
             DateTime start = DateTime.UtcNow;
+
+            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument.LoadXml(File.ReadAllText(inputFileNameInStock));
 
             XmlParser<Currency> currenciesParser = new CurrenciesParser(xmlDocument);
             this.Currencies = currenciesParser.Parse();
@@ -39,7 +37,7 @@ namespace xml2json_converter.DataTypes
             XmlParser<ProductCategory> categoriesParser = new CategoriesParser(xmlDocument);
             this.Categories = categoriesParser.Parse();
 
-            XmlParser<OffersItem> offerItemsParser = new OfferItemsParser(xmlDocument, this.PriceTypes);
+            XmlParser<OfferItem> offerItemsParser = new OfferItemsParser(xmlDocument, this.PriceTypes);
             this.Offers = offerItemsParser.Parse();
 
             DateTime end = DateTime.UtcNow;
@@ -55,7 +53,7 @@ namespace xml2json_converter.DataTypes
         public PriceItem[] Prices { get; set; }
 
         [XmlArray(ElementName = "offers", Order = 3), XmlArrayItem(ElementName = "offer")]
-        public OffersItem[] Offers { get; set; }
+        public OfferItem[] Offers { get; set; }
 
         [XmlIgnore]
         //[XmlArray(ElementName = "price_types", Order = 4), XmlArrayItem(ElementName = "price_type")]

@@ -10,9 +10,9 @@ using xml2json_converter.DataTypes;
 
 namespace xml2json_converter.Parsers
 {
-    public class OfferItemsParser : XmlParser<OffersItem>
+    public class OfferItemsParser : XmlParser<OfferItem>
     {
-        public PriceType[] PriceTypes { get; set; }
+        private PriceType[] PriceTypes { get; set; }
         private MapperConfiguration MapperConfig = new MapperConfiguration(cfg => cfg.CreateMap<PriceType, PriceItem>());
         private Mapper Mapper;
 
@@ -22,9 +22,9 @@ namespace xml2json_converter.Parsers
             Mapper = new Mapper(MapperConfig);
         }
 
-        public override OffersItem[] Parse()
+        public override OfferItem[] Parse()
         {
-            var offers = new List<OffersItem>();
+            var offers = new List<OfferItem>();
 
             Console.WriteLine("Filling product list ...");
             var offersXml = this.RootNode.SelectSingleNode("ПакетПредложений/Предложения").ChildNodes;
@@ -47,7 +47,7 @@ namespace xml2json_converter.Parsers
                 // если товар имеет разновидности, то его id имеет вид 'id_товара#id_уникальной_разновидности_товара', символ '#' - разделитель двух частей id
                 var splittedId = node.SelectNodes("Ид").Item(0).InnerText.Split('#');
 
-                OffersItem item = new OffersItem()
+                OfferItem item = new OfferItem()
                 {
                     // если разновидности товара, то id должен быть числовой, поэтому вычисляем его hash, если разновидностей нет, то можно оставить как есть изначально
                     Id = splittedId.LastOrDefault(),
@@ -66,7 +66,7 @@ namespace xml2json_converter.Parsers
             // fill goods list --start
             Console.WriteLine("Filling product characteristics ...");
             var goodsXml = this.RootNode.SelectSingleNode("ПакетПредложений/Товары").ChildNodes;
-            var updatedOffers = new List<OffersItem>();
+            var updatedOffers = new List<OfferItem>();
 
             DateTime start = DateTime.UtcNow;
 
@@ -78,7 +78,7 @@ namespace xml2json_converter.Parsers
 
                 var splittedId = node.SelectNodes("Ид").Item(0).InnerText.Split('#');
 
-                OffersItem item = (offers.FirstOrDefault(o => o.Id == splittedId.LastOrDefault()));// || o.Id == splittedId.LastOrDefault().GetCustomHashStringValue()));
+                OfferItem item = (offers.FirstOrDefault(o => o.Id == splittedId.LastOrDefault()));// || o.Id == splittedId.LastOrDefault().GetCustomHashStringValue()));
 
                 item.Name = node.SelectNodes("Наименование")?.Item(0)?.InnerText ?? "";
                 item.Description = node.SelectNodes("Описание")?.Item(0)?.InnerText;
@@ -127,6 +127,7 @@ namespace xml2json_converter.Parsers
                             item.PriceItems = null;
                         }
                     }
+
                     item.SellingType = item.PriceItems != null ? "u" : "r";
 
                     var pars = parameters.Where(p => String.Compare(p.Name, "Количество") != 0 && String.Compare(p.Name, "Наличие") != 0);
