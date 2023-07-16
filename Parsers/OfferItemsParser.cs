@@ -70,7 +70,7 @@ namespace xml2json_converter.Parsers
 
             DateTime start = DateTime.UtcNow;
 
-            var keywords = new FillKeywords().Keywords;
+            var keywords = new KeywordsAdder().Keywords;
             var counter = 0;
             foreach (XmlNode node in goodsXml)
             {

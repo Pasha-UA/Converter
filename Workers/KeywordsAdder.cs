@@ -1,6 +1,6 @@
 ﻿namespace ConverterProject
 {
-    public class FillKeywords
+    public class KeywordsAdder
     {
         public class Keyword
         {
@@ -30,7 +30,7 @@
 
         public IEnumerable<Keyword> Keywords { get; set; }
 
-        public FillKeywords(bool init = false)
+        public KeywordsAdder(bool init = false)
         {
             this.Keywords = new List<Keyword>();
             if (init) this.Keywords = InitKeywordsFromFile();
