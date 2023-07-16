@@ -18,14 +18,24 @@ namespace ConverterProject
 
             XmlSerializer serializer = new XmlSerializer(typeof(yml_catalog));
 
-            using (FileStream o = new FileStream(outputFileName, FileMode.Create))
+            using (FileStream outputStream = new FileStream(outputFileName, FileMode.Create))
             {
-                using (XmlTextWriter writer = new XmlTextWriter(o, Encoding.UTF8))
+
+                XmlWriterSettings xmlWriterSettings = new XmlWriterSettings
                 {
-                    writer.Formatting = Formatting.Indented;
+                    Async = true,
+                    Indent = true,
+                    Encoding = Encoding.UTF8
+                };
+
+                using (XmlWriter writer = XmlWriter.Create(outputStream, xmlWriterSettings))
+                {
+                    // writer.Formatting = Formatting.Indented;
                     writer.WriteStartDocument();
                     writer.WriteDocType("yml_catalog", null, "shops.dtd", null);
-                    serializer.Serialize(writer, priceList);
+                    // serializer.Serialize(writer, priceList);
+                    await Task.Run(() => serializer.Serialize(writer, priceList));
+                    await writer.FlushAsync();
                 }
             }
 

@@ -17,8 +17,6 @@ using xml2json_converter.DataTypes;
 
 namespace ConverterProject
 {
-    // public class ItemTypes
-    // {
 
         [Serializable]
         public class yml_catalog
@@ -35,5 +33,4 @@ namespace ConverterProject
                 this.shop = new Shop();
             }
         }
-    // }
 }
