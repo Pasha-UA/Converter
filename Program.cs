@@ -26,7 +26,6 @@ internal class Program
         var parametersOption = CreateOption<string>("--parameters", "File with import parameters", "params.json", "-p");
         var secretTokenOption = CreateOption<string>("--secret-token", "Secret token for uploading file. Default token you can save in the 'secrets.json' file.", null, "-st");
         var convertOnlyOption = CreateOption<bool>("--convert-only", "Convert file only. Do not upload", false, "-co");
-        var uploadCommand = new Command("upload", "Upload previously prepared file.");
 
         rootCommand.Add(inputCmlNameOption);
         rootCommand.Add(outputXmlNameOption);
@@ -34,9 +33,10 @@ internal class Program
         rootCommand.Add(secretTokenOption);
         rootCommand.Add(convertOnlyOption);
 
+        var uploadCommand = new Command("upload", "Upload previously prepared file.");
         rootCommand.AddCommand(uploadCommand);
 
-        var uploadCommandArgument = new Argument<string>(name: "filename", getDefaultValue: () => "import_offers.xml", description: "File to upload");
+        var uploadCommandArgument = new Argument<string>(name: "filename", getDefaultValue: () => Defaults.DefaultOutputFileName, description: "File to upload");
         uploadCommand.AddArgument(uploadCommandArgument);
 
         rootCommand.SetHandler(async (context) =>

@@ -52,8 +52,8 @@ namespace xml2json_converter.DataTypes
         [XmlElement(ElementName = "quantity_in_stock")]
         public int? QuantityInStock { get; set; }
 
-        // [XmlElement(ElementName = "param")]
-        [XmlIgnore]
+        [XmlElement(ElementName = "param")]
+        // [XmlIgnore]
         public ParameterItem[] Parameters { get; set; } = null;
 
         [XmlAttribute(AttributeName = "selling_type")]

@@ -33,8 +33,8 @@ namespace ConverterProject
                     // writer.Formatting = Formatting.Indented;
                     writer.WriteStartDocument();
                     writer.WriteDocType("yml_catalog", null, "shops.dtd", null);
-                    // serializer.Serialize(writer, priceList);
-                    await Task.Run(() => serializer.Serialize(writer, priceList));
+                    serializer.Serialize(writer, priceList);
+                    // await Task.Run(() => serializer.Serialize(writer, priceList));
                     await writer.FlushAsync();
                 }
             }

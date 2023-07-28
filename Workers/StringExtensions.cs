@@ -27,6 +27,7 @@ namespace xml2json_converter
                 foreach (byte b in bytes)
                 {
                     hash = hash * 11 + b;
+                    hash %= 1000000000;
                 }
             }
             return hash.ToString();
