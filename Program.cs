@@ -65,7 +65,7 @@ internal class Program
                         context.ExitCode = -1;
                     }
 
-                    await WaitForEnterKeyPress();
+                    // await WaitForEnterKeyPress();
                 });
 
         uploadCommand.SetHandler(async (context) =>
@@ -74,7 +74,7 @@ internal class Program
                     var fileToUpload = context.ParseResult.GetValueForArgument(uploadCommandArgument);
                     context.ExitCode = await Uploader.UploadData(fileToUpload, GetSecretToken(secretToken, configuration));
 
-                    await WaitForEnterKeyPress();
+                    // await WaitForEnterKeyPress();
                 });
 
         return rootCommand;

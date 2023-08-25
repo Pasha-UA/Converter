@@ -52,8 +52,8 @@ namespace xml2json_converter.Parsers
                     // если разновидности товара, то id должен быть числовой, поэтому вычисляем его hash, если разновидностей нет, то можно оставить как есть изначально
                     Id = splittedId.LastOrDefault(),
                     GroupId = splittedId.Length > 1 ? splittedId[0].GetCustomHashStringValue() : "",
-                    RetailPrice = prices.FirstOrDefault(p => p.IsRetail, null).Price,
-                    RetailPriceCurrencyId = prices.FirstOrDefault(p => p.IsRetail, null).CurrencyId,
+                    RetailPrice = prices.FirstOrDefault(p => p.IsRetail)?.Price,
+                    RetailPriceCurrencyId = prices.FirstOrDefault(p => p.IsRetail)?.CurrencyId,
                     PriceItems = prices.Where(p => !p.IsRetail).Any() ? prices.Where(p => !p.IsRetail).ToArray() : null,
                     //                            SellingType = prices.Where(p => !p.IsRetail).Any() ? "u" : "r"
 
