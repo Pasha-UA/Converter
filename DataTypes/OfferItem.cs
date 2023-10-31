@@ -49,7 +49,7 @@ namespace xml2json_converter.DataTypes
 
         public string[] SearchStrings { get; set; } = null;
 
-        [XmlElement(ElementName = "quantity_in_stock")]
+        [XmlElement(ElementName = "stock_quantity")]
         public int? QuantityInStock { get; set; }
 
         [XmlElement(ElementName = "param")]
