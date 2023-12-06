@@ -23,8 +23,9 @@ namespace ConverterProject
         {
             public Shop shop { get; set; }
 
-            public yml_catalog(string inputFileNameInStock = Defaults.DefaultInputFileName)
+            public yml_catalog(string inputFileNameInStock = null)
             {
+                inputFileNameInStock ??= Defaults.DefaultInputFileName;
                 this.shop = new Shop(inputFileNameInStock);
             }
 

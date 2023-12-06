@@ -9,6 +9,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using AutoMapper;
 using ConverterProject;
+using Serilog;
 using xml2json_converter.Fillers;
 using xml2json_converter.Parsers;
 
@@ -21,8 +22,10 @@ namespace xml2json_converter.DataTypes
 
         }
 
-        public Shop(string inputFileNameInStock = Defaults.DefaultInputFileName)
+        public Shop(string inputFileNameInStock = null)
         {
+            inputFileNameInStock ??= Defaults.DefaultInputFileName;
+
             DateTime start = DateTime.UtcNow;
 
             XmlDocument xmlDocument = new XmlDocument();
@@ -42,7 +45,10 @@ namespace xml2json_converter.DataTypes
 
             DateTime end = DateTime.UtcNow;
             TimeSpan timeDiff = end - start;
-            Console.WriteLine("{0} milliseconds", timeDiff.TotalMilliseconds.ToString());
+            var logString = $"{timeDiff.TotalMilliseconds} milliseconds";
+            // Console.WriteLine(logString);
+            Log.Information(logString);
+
         }
 
         [XmlArray(ElementName = "currencies", Order = 0), XmlArrayItem(ElementName = "currency")]

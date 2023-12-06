@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
+using Serilog;
 using xml2json_converter.DataTypes;
 
 namespace xml2json_converter.Parsers
@@ -16,7 +17,7 @@ namespace xml2json_converter.Parsers
         public override ProductCategory[] Parse()
         {
             var categories = new List<ProductCategory>();
-            Console.WriteLine("Filling categories list ...");
+            // Console.WriteLine("Filling categories list ...");
             var categoriesXml = this.RootNode.SelectSingleNode("Классификатор/Группы").ChildNodes;
             foreach (XmlNode node in categoriesXml)
             {
@@ -27,8 +28,11 @@ namespace xml2json_converter.Parsers
                     Name = node.SelectNodes("Наименование").Item(0).InnerText
                 };
                 categories.Add(item);
+                Log.Information($"Categorie {item.Name} added.");
             }
-            Console.WriteLine("Filling categories list complete. Total {0}", categories.Count);
+            var logString = $"Filling categories list complete. Total {categories.Count}" ;
+            // Console.WriteLine(logString);
+            Log.Information(logString);
 
             return categories.ToArray();
         }

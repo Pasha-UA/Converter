@@ -10,10 +10,12 @@ namespace ConverterProject
 
     public static class Converter
     {
-        public static async Task<string> Convert(string inputFileNameInStock = Defaults.DefaultInputFileName,
-                                                 string outputFileName = Defaults.DefaultOutputFileName
-                                                )
+        public static async Task<string> Convert(string inputFileNameInStock = null, string outputFileName = null)
         {
+
+            inputFileNameInStock ??= Defaults.DefaultInputFileName;
+            outputFileName ??= Defaults.DefaultOutputFileName;
+
             var priceList = new yml_catalog(inputFileNameInStock);
 
             XmlSerializer serializer = new XmlSerializer(typeof(yml_catalog));

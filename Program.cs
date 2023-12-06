@@ -1,5 +1,6 @@
 ﻿using ConverterProject;
 using Microsoft.Extensions.Configuration;
+using Serilog;
 using System.CommandLine;
 using System.CommandLine.Parsing;
 
@@ -7,14 +8,31 @@ internal class Program
 {
     private static async Task<int> Main(string[] args)
     {
-        IConfiguration configuration = new ConfigurationBuilder()
-             .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-             .AddJsonFile("secrets.json", optional: true, reloadOnChange: true)
-             .Build();
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .WriteTo.File(
+                "logs/log-.txt",
+                rollingInterval: RollingInterval.Day,
+                restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information
+            )
+            .CreateLogger();
 
-        var rootCommand = CreateRootCommand(configuration);
+        try
+        {
+            IConfiguration configuration = new ConfigurationBuilder()
+                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                 .AddJsonFile("secrets.json", optional: true, reloadOnChange: true)
+                 .Build();
 
-        return await rootCommand.InvokeAsync(args);
+            var rootCommand = CreateRootCommand(configuration);
+
+            return await rootCommand.InvokeAsync(args);
+        }
+        finally
+        {
+            // Close and flush the log when the application exits
+            Log.CloseAndFlush();
+        }
     }
 
     private static RootCommand CreateRootCommand(IConfiguration configuration)
@@ -50,7 +68,9 @@ internal class Program
                     if (File.Exists(inputFileName))
                     {
                         var outputFileWithPath = await Converter.Convert(inputFileName, outputFileName);
-                        Console.WriteLine($"File converted successfully and saved to {outputFileWithPath}");
+                        var logString = $"File converted successfully and saved to {outputFileWithPath}";
+                        // Console.WriteLine(logString);
+                        Log.Information(logString);
                         context.ExitCode = 0;
 
                         if (!convertOnly)
@@ -60,8 +80,10 @@ internal class Program
                     }
                     else
                     {
-                        var fullInputFileName = Path.GetFullPath(inputFileName);
-                        Console.WriteLine($"File {fullInputFileName} not found.");
+                        var inputFileWithPath = Path.GetFullPath(inputFileName);
+                        var logString = $"File {inputFileWithPath} not found.";
+                        // Console.WriteLine(logString);
+                        Log.Information(logString);
                         context.ExitCode = -1;
                     }
 
@@ -99,12 +121,25 @@ internal class Program
 
     private static string GetSecretToken(string token, IConfiguration configuration)
     {
-        if (string.IsNullOrWhiteSpace(token))
+        try
         {
-            token = configuration["uploadToken"];
-        }
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                token = configuration["uploadToken"];
+            }
 
-        return token;
+            return token;
+        }
+        catch (Exception ex)
+        {
+            // Log the exception or handle it based on your application's requirements
+            var logString = $"Error retrieving the secret token: {ex.Message}";
+            // Console.WriteLine(logString);
+            Log.Information(logString);
+
+            // Provide a default value or throw the exception again, depending on your needs
+            return "";
+        }
     }
 
     private static async Task WaitForEnterKeyPress()

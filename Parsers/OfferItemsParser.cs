@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using AutoMapper;
 using ConverterProject;
+using Serilog;
 using xml2json_converter.DataTypes;
 
 namespace xml2json_converter.Parsers
@@ -26,7 +27,8 @@ namespace xml2json_converter.Parsers
         {
             var offers = new List<OfferItem>();
 
-            Console.WriteLine("Filling product list ...");
+            // Console.WriteLine("Filling product list ...");
+            Log.Information("Filling product list ...");
             var offersXml = this.RootNode.SelectSingleNode("ПакетПредложений/Предложения").ChildNodes;
             foreach (XmlNode node in offersXml)
             {
@@ -60,11 +62,13 @@ namespace xml2json_converter.Parsers
                 };
                 offers.Add(item);
             }
-            Console.WriteLine("Filling product list complete. Total {0}", offers.Count);
+            // Console.WriteLine("Filling product list complete. Total {0}", offers.Count);
+            Log.Information($"Filling product list complete. Total {offers.Count}" );
             // fill offers list --end
 
             // fill goods list --start
-            Console.WriteLine("Filling product characteristics ...");
+            // Console.WriteLine("Filling product characteristics ...");
+            Log.Information("Filling product characteristics ...");
             var goodsXml = this.RootNode.SelectSingleNode("ПакетПредложений/Товары").ChildNodes;
             var updatedOffers = new List<OfferItem>();
 
@@ -137,7 +141,8 @@ namespace xml2json_converter.Parsers
                     }
                 }
 
-                Console.WriteLine("Loaded {0} of {1}, {2} {3}", counter, goodsXml.Count, item.BarCode, item.Name);
+                // Console.WriteLine("Loaded {0} of {1}, {2} {3}", counter, goodsXml.Count, item.BarCode, item.Name);
+                Log.Information("Loaded {0} of {1}, {2} {3}", counter, goodsXml.Count, item.BarCode, item.Name);
 
                 updatedOffers.Add(item);
             }
@@ -146,7 +151,8 @@ namespace xml2json_converter.Parsers
             //var difference = offersIds.Except(updatedOffersIds);
             offers = updatedOffers;
 
-            Console.WriteLine("Filling product characteristics complete.");
+            // Console.WriteLine("Filling product characteristics complete.");
+            Log.Information("Filling product characteristics complete.");
 
             return offers.ToArray();
         }

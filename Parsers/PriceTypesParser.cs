@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
+using Serilog;
 using xml2json_converter.DataTypes;
 using xml2json_converter.Parsers;
 
@@ -16,7 +17,8 @@ namespace xml2json_converter.Fillers
         }
         public override PriceType[] Parse()
         {
-            Console.WriteLine("Filling price types ...");
+            // Console.WriteLine("Filling price types ...");
+            Log.Information("Filling price types ...");
             var priceTypesXml = this.RootNode.SelectSingleNode("ПакетПредложений/ТипыЦен").ChildNodes;
             var priceTypes = new List<PriceType>();
             foreach (XmlNode node in priceTypesXml)
@@ -43,8 +45,9 @@ namespace xml2json_converter.Fillers
                 }
                 priceTypes.Add(priceType);
             }
-            Console.WriteLine("Filling price types complete. Total {0}", priceTypes.Count);
-
+            var logString = $"Filling price types complete. Total {priceTypes.Count}";
+            // Console.WriteLine($"Filling price types complete. Total {0}", priceTypes.Count);
+            Log.Information(logString);
             return priceTypes.ToArray();
         }
 
