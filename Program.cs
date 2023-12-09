@@ -6,25 +6,24 @@ using System.CommandLine.Parsing;
 
 internal class Program
 {
+    private static IConfiguration Configuration { get; set; } = new ConfigurationBuilder()
+                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                 .AddJsonFile(Defaults.DefaultSecretKeyFileName, optional: true, reloadOnChange: true)
+                 .Build();
+
     private static async Task<int> Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
-            .WriteTo.File(
-                "logs/log-.txt",
+            .WriteTo.Async(a => a.File(
+                $"{Defaults.LogsPath}/log-.txt",
                 rollingInterval: RollingInterval.Day,
                 restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information
-            )
+            ), bufferSize: 10000)
             .CreateLogger();
-
         try
         {
-            IConfiguration configuration = new ConfigurationBuilder()
-                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                 .AddJsonFile("secrets.json", optional: true, reloadOnChange: true)
-                 .Build();
-
-            var rootCommand = CreateRootCommand(configuration);
+            var rootCommand = CreateRootCommand();
 
             return await rootCommand.InvokeAsync(args);
         }
@@ -35,14 +34,14 @@ internal class Program
         }
     }
 
-    private static RootCommand CreateRootCommand(IConfiguration configuration)
+    private static RootCommand CreateRootCommand()
     {
         var rootCommand = new RootCommand();
 
         var inputCmlNameOption = CreateOption<string>("--input", "File with input data", Defaults.DefaultInputFileName, "-i");
         var outputXmlNameOption = CreateOption<string>("--output", "Output file name", Defaults.DefaultOutputFileName, "-o");
         var parametersOption = CreateOption<string>("--parameters", "File with import parameters", "params.json", "-p");
-        var secretTokenOption = CreateOption<string>("--secret-token", "Secret token for uploading file. Default token you can save in the 'secrets.json' file.", null, "-st");
+        var secretTokenOption = CreateOption<string>("--secret-token", $"Secret token for uploading file. Default token you can save in the '{Defaults.DefaultSecretKeyFileName}' file.", null, "-st");
         var convertOnlyOption = CreateOption<bool>("--convert-only", "Convert file only. Do not upload", false, "-co");
 
         rootCommand.Add(inputCmlNameOption);
@@ -65,6 +64,10 @@ internal class Program
                     var convertOnly = context.ParseResult.GetValueForOption(convertOnlyOption);
                     var secretToken = context.ParseResult.GetValueForOption(secretTokenOption);
 
+
+                    Log.Information("New session started.");
+
+
                     if (File.Exists(inputFileName))
                     {
                         var outputFileWithPath = await Converter.Convert(inputFileName, outputFileName);
@@ -75,7 +78,7 @@ internal class Program
 
                         if (!convertOnly)
                         {
-                            context.ExitCode = await Uploader.UploadData(outputFileName, GetSecretToken(secretToken, configuration));
+                            context.ExitCode = await Uploader.UploadData(outputFileName, GetSecretToken(secretToken));
                         }
                     }
                     else
@@ -83,7 +86,7 @@ internal class Program
                         var inputFileWithPath = Path.GetFullPath(inputFileName);
                         var logString = $"File {inputFileWithPath} not found.";
                         // Console.WriteLine(logString);
-                        Log.Information(logString);
+                        Log.Error(logString);
                         context.ExitCode = -1;
                     }
 
@@ -94,7 +97,7 @@ internal class Program
                 {
                     var secretToken = context.ParseResult.GetValueForOption(secretTokenOption);
                     var fileToUpload = context.ParseResult.GetValueForArgument(uploadCommandArgument);
-                    context.ExitCode = await Uploader.UploadData(fileToUpload, GetSecretToken(secretToken, configuration));
+                    context.ExitCode = await Uploader.UploadData(fileToUpload, GetSecretToken(secretToken));
 
                     // await WaitForEnterKeyPress();
                 });
@@ -119,13 +122,13 @@ internal class Program
         return option;
     }
 
-    private static string GetSecretToken(string token, IConfiguration configuration)
+    private static string GetSecretToken(string token)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(token))
             {
-                token = configuration["uploadToken"];
+                token = Configuration["uploadToken"];
             }
 
             return token;
@@ -135,17 +138,17 @@ internal class Program
             // Log the exception or handle it based on your application's requirements
             var logString = $"Error retrieving the secret token: {ex.Message}";
             // Console.WriteLine(logString);
-            Log.Information(logString);
+            Log.Error(logString);
 
             // Provide a default value or throw the exception again, depending on your needs
             return "";
         }
     }
 
-    private static async Task WaitForEnterKeyPress()
-    {
-        Console.WriteLine("Press ENTER to close program.");
-        await Task.Run(() => Console.ReadLine());
-    }
+    // private static async Task WaitForEnterKeyPress()
+    // {
+    //     Console.WriteLine("Press ENTER to close program.");
+    //     await Task.Run(() => Console.ReadLine());
+    // }
 }
 
