@@ -13,6 +13,9 @@ internal class Program
 
     private static async Task<int> Main(string[] args)
     {
+        // Subscribe to the CancelKeyPress event
+        Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
+
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
             .WriteTo.Async(a => a.File(
@@ -150,5 +153,19 @@ internal class Program
     //     Console.WriteLine("Press ENTER to close program.");
     //     await Task.Run(() => Console.ReadLine());
     // }
+
+    private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+    {
+        // TODO: cleanup, close all open files        
+
+        Log.Warning("Ctrl+C detected. Exiting...");
+        e.Cancel = true; // Prevents the application from immediately terminating
+
+
+        Log.CloseAndFlush();
+
+        // exit application
+        Environment.Exit(0);
+    }
 }
 

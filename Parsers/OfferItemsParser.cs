@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using System.Xml;
 using AutoMapper;
 using ConverterProject;
@@ -23,11 +24,23 @@ namespace xml2json_converter.Parsers
             Mapper = new Mapper(MapperConfig);
         }
 
+        // проверяет содержит ли строка HTML-теги
+        private bool ContainsHtmlTags(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return false; // Return false for empty input
+            }
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(input);
+
+            return doc.DocumentNode.Descendants().Any(node => node.NodeType == HtmlNodeType.Element);
+        }
         public override OfferItem[] Parse()
         {
             var offers = new List<OfferItem>();
 
-            // Console.WriteLine("Filling product list ...");
             Log.Information("Filling product list ...");
             var offersXml = this.RootNode.SelectSingleNode("ПакетПредложений/Предложения").ChildNodes;
             foreach (XmlNode node in offersXml)
@@ -62,12 +75,10 @@ namespace xml2json_converter.Parsers
                 };
                 offers.Add(item);
             }
-            // Console.WriteLine("Filling product list complete. Total {0}", offers.Count);
-            Log.Information($"Filling product list complete. Total {offers.Count}" );
+            Log.Information($"Filling product list complete. Total {offers.Count}");
             // fill offers list --end
 
             // fill goods list --start
-            // Console.WriteLine("Filling product characteristics ...");
             Log.Information("Filling product characteristics ...");
             var goodsXml = this.RootNode.SelectSingleNode("ПакетПредложений/Товары").ChildNodes;
             var updatedOffers = new List<OfferItem>();
@@ -85,7 +96,11 @@ namespace xml2json_converter.Parsers
                 OfferItem item = (offers.FirstOrDefault(o => o.Id == splittedId.LastOrDefault()));// || o.Id == splittedId.LastOrDefault().GetCustomHashStringValue()));
 
                 item.Name = node.SelectNodes("Наименование")?.Item(0)?.InnerText ?? "";
-                item.Description = node.SelectNodes("Описание")?.Item(0)?.InnerText;
+
+                // если description включает html-теги, то обернуть его в тег <![CDATA [...]]>
+                var description = node.SelectNodes("Описание")?.Item(0)?.InnerText;
+                item.Description = ContainsHtmlTags(description) ? $"<![CDATA [{description}]]>" : description;
+
                 item.CategoryId = node.SelectNodes("Группы/Ид").Item(0).InnerText ?? "";
                 item.BarCode = node.SelectNodes("КодТовара").Item(0).InnerText;
                 item.BaseUnit = node.SelectNodes("БазоваяЕдиница").Item(0).InnerText;
