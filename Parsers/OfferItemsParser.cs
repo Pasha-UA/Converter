@@ -24,66 +24,18 @@ namespace xml2json_converter.Parsers
             Mapper = new Mapper(MapperConfig);
         }
 
-        // проверяет содержит ли строка HTML-теги
-        private bool ContainsHtmlTags(string input)
-        {
-            if (string.IsNullOrEmpty(input))
-            {
-                return false; // Return false for empty input
-            }
-
-            var doc = new HtmlDocument();
-            doc.LoadHtml(input);
-
-            return doc.DocumentNode.Descendants().Any(node => node.NodeType == HtmlNodeType.Element);
-        }
         public override OfferItem[] Parse()
         {
-            var offers = new List<OfferItem>();
-
+            // первый проход. Заполнение списка товаров и части полей
             Log.Information("Filling product list ...");
-            var offersXml = this.RootNode.SelectSingleNode("ПакетПредложений/Предложения").ChildNodes;
-            foreach (XmlNode node in offersXml)
-            {
-                var prices = new List<PriceItem>();
-                XmlNode pricesNodeXml = node.SelectSingleNode("Цены");
-                foreach (XmlNode price in pricesNodeXml)
-                {
-                    var Id = price.SelectNodes("ИдТипаЦены").Item(0).InnerText;
-                    var p = price.SelectNodes(" ЦенаЗаЕдиницу").Item(0).InnerText
-                        .Replace(".", CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
-
-                    PriceItem priceItem = Mapper.Map<PriceItem>(PriceTypes.First(p => p.Id == Id));
-                    priceItem.Price = Decimal.Parse(p);
-
-                    prices.Add(priceItem);
-                }
-
-                // если товар имеет разновидности, то его id имеет вид 'id_товара#id_уникальной_разновидности_товара', символ '#' - разделитель двух частей id
-                var splittedId = node.SelectNodes("Ид").Item(0).InnerText.Split('#');
-
-                OfferItem item = new OfferItem()
-                {
-                    // если разновидности товара, то id должен быть числовой, поэтому вычисляем его hash, если разновидностей нет, то можно оставить как есть изначально
-                    Id = splittedId.LastOrDefault(),
-                    GroupId = splittedId.Length > 1 ? splittedId[0].GetCustomHashStringValue() : "",
-                    RetailPrice = prices.FirstOrDefault(p => p.IsRetail)?.Price,
-                    RetailPriceCurrencyId = prices.FirstOrDefault(p => p.IsRetail)?.CurrencyId,
-                    PriceItems = prices.Where(p => !p.IsRetail).Any() ? prices.Where(p => !p.IsRetail).ToArray() : null,
-                    //                            SellingType = prices.Where(p => !p.IsRetail).Any() ? "u" : "r"
-
-                };
-                offers.Add(item);
-            }
+            List<OfferItem> offers = OfferItemsParse(this.RootNode.SelectSingleNode("ПакетПредложений/Предложения").ChildNodes);            
             Log.Information($"Filling product list complete. Total {offers.Count}");
-            // fill offers list --end
 
             // fill goods list --start
+            // второй проход. Заполнение оставшихся полей товара.
             Log.Information("Filling product characteristics ...");
             var goodsXml = this.RootNode.SelectSingleNode("ПакетПредложений/Товары").ChildNodes;
             var updatedOffers = new List<OfferItem>();
-
-            DateTime start = DateTime.UtcNow;
 
             var keywords = new KeywordsAdder().Keywords;
             var counter = 0;
@@ -91,15 +43,14 @@ namespace xml2json_converter.Parsers
             {
                 counter++;
 
+                // если товар имеет разновидности, то его id имеет вид 'id_товара#id_уникальной_разновидности_товара', символ '#' - разделитель двух частей id
                 var splittedId = node.SelectNodes("Ид").Item(0).InnerText.Split('#');
 
-                OfferItem item = (offers.FirstOrDefault(o => o.Id == splittedId.LastOrDefault()));// || o.Id == splittedId.LastOrDefault().GetCustomHashStringValue()));
+                OfferItem item = offers.FirstOrDefault(o => o.Id == splittedId.LastOrDefault());// || o.Id == splittedId.LastOrDefault().GetCustomHashStringValue()));
 
                 item.Name = node.SelectNodes("Наименование")?.Item(0)?.InnerText ?? "";
 
-                // если description включает html-теги, то обернуть его в тег <![CDATA [...]]>
-                var description = node.SelectNodes("Описание")?.Item(0)?.InnerText;
-                item.Description = ContainsHtmlTags(description) ? $"<![CDATA [{description}]]>" : description;
+                item.Description = node.SelectNodes("Описание")?.Item(0)?.InnerText;
 
                 item.CategoryId = node.SelectNodes("Группы/Ид").Item(0).InnerText ?? "";
                 item.BarCode = node.SelectNodes("КодТовара").Item(0).InnerText;
@@ -126,6 +77,8 @@ namespace xml2json_converter.Parsers
                         };
                         parameters.Add(parameter);
                     }
+
+                    // TODO: в текущей редакции все товары "в наличии". Нужно доработать ситуацию когда товаров нет на складе.
                     item.Available = "true"; // bool.Parse(parameters.Find(p => p.Id == "ИД-Наличие").Value).ToString();
                     item.Presence = "available";
                     item.QuantityInStock = Int32.Parse(parameters.First(p => p.Id == "ИД-Количество").Value);
@@ -136,19 +89,36 @@ namespace xml2json_converter.Parsers
                     {
                         var filteredPriceItems = item.PriceItems.Where(p => p.Quantity <= item.QuantityInStock).ToArray();
                         if (filteredPriceItems.Length > 0)
-                        // если есть оптовые цены, то тип продажи 'u' (universal), подразумевается что розничная цена есть всегда
                         {
                             item.PriceItems = filteredPriceItems;
                         }
                         else
-                        // если есть только розничная цена
+                        // если нет оптовых цен
                         {
                             item.PriceItems = null;
                         }
                     }
 
-                    item.SellingType = item.PriceItems != null ? "u" : "r";
+                    // если есть и оптовая(ые) цена(ы) и розничная, то тип продажи 'u' (universal)
+                    // если есть только оптовая(ые) цена(ы) и нет розничной, то тип продажи 'w' (wholesale)
+                    // если есть только розничная цена и нет оптовых, то тип продажи 'r' (retail)
+                    // Check if there are both wholesale and retail prices or neither wholesale and retail
+                    if (item.PriceItems != null && item.RetailPrice != null || item.PriceItems == null && item.RetailPrice == null)
+                    {
+                        item.SellingType = "u"; // Universal
+                    }
+                    // Check if there are only wholesale prices
+                    else if (item.PriceItems != null && item.RetailPrice == null)
+                    {
+                        item.SellingType = "w"; // Wholesale
+                    }
+                    // Check if there is only a retail price
+                    else if (item.PriceItems == null && item.RetailPrice != null)
+                    {
+                        item.SellingType = "r"; // Retail
+                    }
 
+                    // Количество и Наличие записаны как "параметры". Фильтруем параметры от этих двух значений
                     var pars = parameters.Where(p => String.Compare(p.Name, "Количество") != 0 && String.Compare(p.Name, "Наличие") != 0);
                     if (pars.Any())
                     {
@@ -156,7 +126,6 @@ namespace xml2json_converter.Parsers
                     }
                 }
 
-                // Console.WriteLine("Loaded {0} of {1}, {2} {3}", counter, goodsXml.Count, item.BarCode, item.Name);
                 Log.Information("Loaded {0} of {1}, {2} {3}", counter, goodsXml.Count, item.BarCode, item.Name);
 
                 updatedOffers.Add(item);
@@ -166,10 +135,51 @@ namespace xml2json_converter.Parsers
             //var difference = offersIds.Except(updatedOffersIds);
             offers = updatedOffers;
 
-            // Console.WriteLine("Filling product characteristics complete.");
             Log.Information("Filling product characteristics complete.");
 
             return offers.ToArray();
         }
+
+        private List<PriceItem> ParsePricesForItem(XmlNode pricesNodeXml)
+        {
+            // XmlNode pricesNodeXml = node;
+            List<PriceItem> prices = new List<PriceItem>();
+            foreach (XmlNode price in pricesNodeXml)
+            {
+                var Id = price.SelectNodes("ИдТипаЦены").Item(0).InnerText;
+                var p = price.SelectNodes(" ЦенаЗаЕдиницу").Item(0).InnerText
+                    .Replace(".", CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
+
+                PriceItem priceItem = Mapper.Map<PriceItem>(PriceTypes.First(p => p.Id == Id));
+                priceItem.Price = Decimal.Parse(p);
+
+                prices.Add(priceItem);
+            }
+            return prices;
+        }
+
+            private List<OfferItem> OfferItemsParse(XmlNodeList offersXml){
+            var offers = new List<OfferItem>();
+            foreach (XmlNode node in offersXml)
+            {
+                var prices = ParsePricesForItem(node.SelectSingleNode("Цены"));
+
+                // если товар имеет разновидности, то его id имеет вид 'id_товара#id_уникальной_разновидности_товара', символ '#' - разделитель двух частей id
+                var splittedId = node.SelectNodes("Ид").Item(0).InnerText.Split('#');
+
+                OfferItem item = new OfferItem()
+                {
+                    // если разновидности товара, то id должен быть числовой, поэтому вычисляем его hash, если разновидностей нет, то можно оставить как есть изначально
+                    Id = splittedId.LastOrDefault(),
+                    GroupId = splittedId.Length > 1 ? splittedId[0].GetCustomHashStringValue() : "",
+                    RetailPrice = prices.FirstOrDefault(p => p.IsRetail)?.Price,
+                    RetailPriceCurrencyId = prices.FirstOrDefault(p => p.IsRetail)?.CurrencyId,
+                    PriceItems = prices.Where(p => !p.IsRetail).Any() ? prices.Where(p => !p.IsRetail).ToArray() : null,
+                };
+                offers.Add(item);
+            }
+            return offers;
+            }
+
     }
 }

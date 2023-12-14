@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Serialization;
 using ConverterProject;
 
@@ -32,8 +33,36 @@ namespace xml2json_converter.DataTypes
         public PriceItem[] PriceItems { get; set; } = null;
         public PriceItem BulkPrice { get; set; } = null;// оптовая цена
 
-        [XmlElement(ElementName = "description")]
-        public string Description { get; set; }
+        // всe эти манипуляции с description - для того что оно правильно сериализовывалось. нужно оставлять угловые скобки, не заменяя их на &lt &gt
+        // и оборачивать все в тег CDATA
+        private string _description;
+
+        [XmlIgnore]
+        public string Description
+        {
+            get => _description;
+            set => _description = value;
+        }
+
+        [XmlElement("description")]
+        public XmlNode[] DescriptionCData
+        {
+            get
+            {
+                var dummy = new XmlDocument();
+                return new XmlNode[] { dummy.CreateCDataSection(_description) };
+            }
+            set
+            {
+                if (value != null && value.Length > 0 && value[0] is XmlCDataSection cdata)
+                {
+                    _description = cdata.Value;
+                }
+            }
+        }
+
+        // [XmlElement(ElementName = "description")]
+        // public string Description { get; set; }
 
         [XmlElement(ElementName = "barcode")]
         public string BarCode { get; set; } // код товара в 1с

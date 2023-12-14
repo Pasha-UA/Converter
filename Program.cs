@@ -165,7 +165,7 @@ internal class Program
         Log.CloseAndFlush();
 
         // exit application
-        Environment.Exit(0);
+        Environment.Exit(-1);
     }
 }
 
