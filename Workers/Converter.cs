@@ -12,9 +12,10 @@ namespace ConverterProject
     {
         public static async Task<string> Convert(string inputFileNameInStock = null, string outputFileName = null)
         {
-
+            // CreateDirectoryIfNotExists
             inputFileNameInStock ??= Defaults.DefaultInputFileName;
             outputFileName ??= Defaults.DefaultOutputFileName;
+            Defaults.EnsureDirectoryExists(Path.GetDirectoryName(inputFileNameInStock));
 
             var priceList = new yml_catalog(inputFileNameInStock);
 

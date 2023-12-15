@@ -16,6 +16,7 @@ internal class Program
         // Subscribe to the CancelKeyPress event
         Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
 
+        Defaults.EnsureDirectoryExists(Defaults.LogsPath);
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
             .WriteTo.Async(a => a.File(
@@ -46,12 +47,14 @@ internal class Program
         var parametersOption = CreateOption<string>("--parameters", "File with import parameters", "params.json", "-p");
         var secretTokenOption = CreateOption<string>("--secret-token", $"Secret token for uploading file. Default token you can save in the '{Defaults.DefaultSecretKeyFileName}' file.", null, "-st");
         var convertOnlyOption = CreateOption<bool>("--convert-only", "Convert file only. Do not upload", false, "-co");
+        var logDirectoryName = CreateOption<string>("--logs_path", "Log directory name", Defaults.LogsPath, "-lp");
 
         rootCommand.Add(inputCmlNameOption);
         rootCommand.Add(outputXmlNameOption);
         rootCommand.Add(parametersOption);
         rootCommand.Add(secretTokenOption);
         rootCommand.Add(convertOnlyOption);
+        rootCommand.Add(logDirectoryName);
 
         var uploadCommand = new Command("upload", "Upload previously prepared file.");
         rootCommand.AddCommand(uploadCommand);
@@ -66,7 +69,7 @@ internal class Program
                     var parameters = context.ParseResult.GetValueForOption(parametersOption);
                     var convertOnly = context.ParseResult.GetValueForOption(convertOnlyOption);
                     var secretToken = context.ParseResult.GetValueForOption(secretTokenOption);
-
+                    var logDirectory = context.ParseResult.GetValueForOption(logDirectoryName);
 
                     Log.Information("New session started.");
 
@@ -74,9 +77,7 @@ internal class Program
                     if (File.Exists(inputFileName))
                     {
                         var outputFileWithPath = await Converter.Convert(inputFileName, outputFileName);
-                        var logString = $"File converted successfully and saved to {outputFileWithPath}";
-                        // Console.WriteLine(logString);
-                        Log.Information(logString);
+                        Log.Information($"File converted successfully and saved to {outputFileWithPath}");
                         context.ExitCode = 0;
 
                         if (!convertOnly)
@@ -87,9 +88,7 @@ internal class Program
                     else
                     {
                         var inputFileWithPath = Path.GetFullPath(inputFileName);
-                        var logString = $"File {inputFileWithPath} not found.";
-                        // Console.WriteLine(logString);
-                        Log.Error(logString);
+                        Log.Error($"File {inputFileWithPath} not found.");
                         context.ExitCode = -1;
                     }
 
@@ -139,9 +138,7 @@ internal class Program
         catch (Exception ex)
         {
             // Log the exception or handle it based on your application's requirements
-            var logString = $"Error retrieving the secret token: {ex.Message}";
-            // Console.WriteLine(logString);
-            Log.Error(logString);
+            Log.Error($"Error retrieving the secret token: {ex.Message}");
 
             // Provide a default value or throw the exception again, depending on your needs
             return "";

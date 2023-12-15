@@ -28,10 +28,9 @@ namespace xml2json_converter.Parsers
                     Name = node.SelectNodes("Наименование").Item(0).InnerText
                 };
                 categories.Add(item);
-                Log.Information($"Categorie {item.Name} added.");
+                Log.Information($"Category {item.Name} added.");
             }
             var logString = $"Filling categories list complete. Total {categories.Count}" ;
-            // Console.WriteLine(logString);
             Log.Information(logString);
 
             return categories.ToArray();

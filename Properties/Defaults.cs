@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace ConverterProject
 {
@@ -22,6 +23,23 @@ namespace ConverterProject
         public static string DefaultOutputFileName => Path.Combine(BaseDataPath, "import_offers.xml");
 
         public static string DefaultSecretKeyFileName => "secrets.json";
+
+        public static void EnsureDirectoryExists(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                try
+                {
+                    Directory.CreateDirectory(path);
+                }
+                catch
+                {
+                    Log.Fatal($"Can't create directory {path}. Program closed.");
+                    Environment.Exit(-2);
+                }
+            }
+        }
+
 
     }
 }
