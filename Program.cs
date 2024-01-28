@@ -38,6 +38,9 @@ internal class Program
         }
     }
 
+    // <<<<<<<<<<<<<  ✨ Codeium AI Suggestion  >>>>>>>>>>>>>>
+    // Creates the root command for the command-line interface (CLI) tool, including options, commands, and handlers.
+    // <<<<<  bot-08d5d5a7-8457-4843-ba4c-25ad5066ac70  >>>>>
     private static RootCommand CreateRootCommand()
     {
         var rootCommand = new RootCommand();
@@ -107,23 +110,8 @@ internal class Program
         return rootCommand;
     }
 
-    private static Option<T> CreateOption<T>(string name, string description, object defaultValue, string alias = null)
-    {
-        var option = new Option<T>(name: name, description: description);
-
-        if (defaultValue != null)
-        {
-            option.SetDefaultValue(defaultValue);
-        }
-
-        if (!string.IsNullOrEmpty(alias))
-        {
-            option.AddAlias(alias);
-        }
-
-        return option;
-    }
-
+    // Retrieves the secret token. If the input token is empty or whitespace, it retrieves the token from the Configuration settings. 
+    // Returns the secret token. If an exception occurs, it logs the exception and returns an empty string.
     private static string GetSecretToken(string token)
     {
         try
@@ -143,6 +131,32 @@ internal class Program
             // Provide a default value or throw the exception again, depending on your needs
             return "";
         }
+    }
+
+    /// <summary>
+    /// Create an option for a command line argument with a name, description, and optional default value and alias.
+    /// </summary>
+    /// <typeparam name="T">Type of the option value.</typeparam>
+    /// <param name="name">Name of the option.</param>
+    /// <param name="description">Description of the option.</param>
+    /// <param name="defaultValue">Default value of the option (optional).</param>
+    /// <param name="alias">Alias for the option (optional).</param>
+    /// <returns>The created option.</returns>
+    private static Option<T> CreateOption<T>(string name, string description, object defaultValue, string alias = null)
+    {
+        var option = new Option<T>(name: name, description: description);
+
+        if (defaultValue != null)
+        {
+            option.SetDefaultValue(defaultValue);
+        }
+
+        if (!string.IsNullOrEmpty(alias))
+        {
+            option.AddAlias(alias);
+        }
+
+        return option;
     }
 
     // private static async Task WaitForEnterKeyPress()

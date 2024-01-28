@@ -1,7 +1,7 @@
 secrets.json
 bin/
 obj/
-data/
+data/*
 publishprofiles/
 .vs/
 .vscode/

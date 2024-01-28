@@ -17,6 +17,7 @@ namespace xml2json_converter.Parsers
         }
 
         public XmlNode GetRootNode(XmlDocument xmlDocument)
+        
         {
             return xmlDocument.FirstChild.NextSibling;
         }
