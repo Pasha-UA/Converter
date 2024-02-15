@@ -24,13 +24,27 @@ namespace xml2json_converter.DataTypes
 
         public Shop(string inputFileNameInStock = null)
         {
-            inputFileNameInStock ??= Defaults.DefaultInputFileName;
-
             DateTime start = DateTime.UtcNow;
 
-            XmlDocument xmlDocument = new XmlDocument();
-            xmlDocument.LoadXml(File.ReadAllText(inputFileNameInStock));
+            XmlDocument xmlDocument = ReadXmlDocument(inputFileNameInStock);
 
+            XmlDocumentParser(xmlDocument);
+
+            DateTime end = DateTime.UtcNow;
+            TimeSpan timeDiff = end - start;
+            var logString = $"{timeDiff.TotalMilliseconds} milliseconds";
+            // Console.WriteLine(logString);
+            Log.Information(logString);
+
+        }
+
+        public Shop(XmlDocument xmlDocument)
+        {
+            XmlDocumentParser(xmlDocument);
+        }
+
+        private void XmlDocumentParser(XmlDocument xmlDocument)
+        {
             XmlParser<Currency> currenciesParser = new CurrenciesParser(xmlDocument);
             this.Currencies = currenciesParser.Parse();
 
@@ -42,13 +56,14 @@ namespace xml2json_converter.DataTypes
 
             XmlParser<OfferItem> offerItemsParser = new OfferItemsParser(xmlDocument, this.PriceTypes);
             this.Offers = offerItemsParser.Parse();
+        }
 
-            DateTime end = DateTime.UtcNow;
-            TimeSpan timeDiff = end - start;
-            var logString = $"{timeDiff.TotalMilliseconds} milliseconds";
-            // Console.WriteLine(logString);
-            Log.Information(logString);
+        private XmlDocument ReadXmlDocument(string inputFileNameInStock)
+        {
+            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument.LoadXml(File.ReadAllText(inputFileNameInStock));
 
+            return xmlDocument;
         }
 
         [XmlArray(ElementName = "currencies", Order = 0), XmlArrayItem(ElementName = "currency")]

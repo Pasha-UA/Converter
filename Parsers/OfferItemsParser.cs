@@ -28,7 +28,7 @@ namespace xml2json_converter.Parsers
         {
             // первый проход. Заполнение списка товаров и части полей
             Log.Information("Filling product list ...");
-            List<OfferItem> offers = OfferItemsParse(this.RootNode.SelectSingleNode("ПакетПредложений/Предложения").ChildNodes);            
+            List<OfferItem> offers = OfferItemsParse(this.RootNode.SelectSingleNode("ПакетПредложений/Предложения").ChildNodes);
             Log.Information($"Filling product list complete. Total {offers.Count}");
 
             // fill goods list --start
@@ -78,9 +78,12 @@ namespace xml2json_converter.Parsers
                         parameters.Add(parameter);
                     }
 
-                    // TODO: в текущей редакции все товары "в наличии". Нужно доработать ситуацию когда товаров нет на складе.
-                    item.Available = "true"; // bool.Parse(parameters.Find(p => p.Id == "ИД-Наличие").Value).ToString();
-                    item.Presence = "available";
+                    item.Available = parameters.First(p => p.Id == "ИД-Наличие").Value;
+                    if (item.Available == "true")
+                    {
+                        item.Presence = "available";
+                    }
+
                     item.QuantityInStock = Int32.Parse(parameters.First(p => p.Id == "ИД-Количество").Value);
 
                     // filtering wholesale prices
@@ -158,7 +161,8 @@ namespace xml2json_converter.Parsers
             return prices;
         }
 
-            private List<OfferItem> OfferItemsParse(XmlNodeList offersXml){
+        private List<OfferItem> OfferItemsParse(XmlNodeList offersXml)
+        {
             var offers = new List<OfferItem>();
             foreach (XmlNode node in offersXml)
             {
@@ -179,7 +183,7 @@ namespace xml2json_converter.Parsers
                 offers.Add(item);
             }
             return offers;
-            }
+        }
 
     }
 }
