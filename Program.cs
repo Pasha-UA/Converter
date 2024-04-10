@@ -1,4 +1,5 @@
 ﻿using ConverterProject;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using System.CommandLine;
@@ -118,7 +119,7 @@ internal class Program
         {
             if (string.IsNullOrWhiteSpace(token))
             {
-                token = Configuration["uploadToken"];
+                token = Configuration["promUploadToken"];
             }
 
             return token;
@@ -177,6 +178,12 @@ internal class Program
 
         // exit application
         Environment.Exit(-1);
+    }
+
+    private static GoogleCredential Credential()
+    {
+        GoogleCredential googleCredential = GoogleCredential.FromAccessToken(accessToken: "");
+        return googleCredential;
     }
 }
 

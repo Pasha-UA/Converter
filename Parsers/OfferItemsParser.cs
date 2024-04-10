@@ -136,7 +136,9 @@ namespace xml2json_converter.Parsers
             //var offersIds = offers.Select(p => p.Id);
             //var updatedOffersIds = updatedOffers.Select(p => p.Id);
             //var difference = offersIds.Except(updatedOffersIds);
-            offers = updatedOffers;
+            offers = updatedOffers.OrderByDescending(offer=>offer.BarCode)
+                                    .ThenByDescending(offer=>offer.QuantityInStock)
+                                    .ToList();
 
             Log.Information("Filling product characteristics complete.");
 

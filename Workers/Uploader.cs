@@ -34,7 +34,7 @@ namespace ConverterProject
         {
             public bool Force_update { get; set; } = false;
             public bool Only_available { get; set; } = false;
-            public string Mark_missing_product_as { get; set; } = MissingProduct.Not_available;
+            public string Mark_missing_product_as { get; set; } = MissingProduct.Deleted;
 
             //[ name, sku, price, images_urls, presence, quantity_in_stock, description, group, keywords, attributes, discount, labels, gtin, mpn ]
 
