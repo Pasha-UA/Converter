@@ -7,7 +7,7 @@ using xml2json_converter.DataTypes;
 
 namespace xml2json_converter.Parsers
 {
-    public class CurrenciesParser : XmlParser<Currency>
+    public class CurrenciesParser : XmlItemParser<Currency>
     {
         public CurrenciesParser(XmlDocument xmlDocument) : base(xmlDocument)
         {

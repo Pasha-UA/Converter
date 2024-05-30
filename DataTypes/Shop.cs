@@ -45,16 +45,16 @@ namespace xml2json_converter.DataTypes
 
         private void XmlDocumentParser(XmlDocument xmlDocument)
         {
-            XmlParser<Currency> currenciesParser = new CurrenciesParser(xmlDocument);
+            XmlItemParser<Currency> currenciesParser = new CurrenciesParser(xmlDocument);
             this.Currencies = currenciesParser.Parse();
 
-            XmlParser<PriceType> priceTypesParser = new PriceTypesParser(xmlDocument);
+            XmlItemParser<PriceType> priceTypesParser = new PriceTypesParser(xmlDocument);
             this.PriceTypes = priceTypesParser.Parse();
 
-            XmlParser<ProductCategory> categoriesParser = new CategoriesParser(xmlDocument);
+            XmlItemParser<ProductCategory> categoriesParser = new CategoriesParser(xmlDocument);
             this.Categories = categoriesParser.Parse();
 
-            XmlParser<OfferItem> offerItemsParser = new OfferItemsParser(xmlDocument, this.PriceTypes);
+            XmlItemParser<OfferItem> offerItemsParser = new OfferItemsParser(xmlDocument, this.PriceTypes);
             this.Offers = offerItemsParser.Parse();
         }
 

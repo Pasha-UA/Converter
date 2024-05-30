@@ -8,7 +8,7 @@ using xml2json_converter.DataTypes;
 
 namespace xml2json_converter.Parsers
 {
-    public class CategoriesParser : XmlParser<ProductCategory>
+    public class CategoriesParser : XmlItemParser<ProductCategory>
     {
 
         public CategoriesParser(XmlDocument xmlDocument) : base(xmlDocument)

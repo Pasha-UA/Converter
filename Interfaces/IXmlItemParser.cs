@@ -6,7 +6,7 @@ using System.Xml;
 
 namespace xml2json_converter
 {
-    public interface IXmlParser
+    public interface IXmlItemParser 
     {
         XmlNode GetRootNode(XmlDocument xmlDocument);
         object[] Parse(Type outputType);

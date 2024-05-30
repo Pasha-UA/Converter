@@ -7,11 +7,11 @@ using xml2json_converter.DataTypes;
 
 namespace xml2json_converter.Parsers
 {
-    public abstract class XmlParser<T> : IXmlParser
+    public abstract class XmlItemParser<T> : IXmlItemParser
     {
         public XmlNode RootNode { get; set; }
 
-        public XmlParser(XmlDocument xmlDocument)
+        public XmlItemParser(XmlDocument xmlDocument)
         {
             this.RootNode = GetRootNode(xmlDocument);
         }

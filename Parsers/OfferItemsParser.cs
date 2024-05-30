@@ -12,7 +12,7 @@ using xml2json_converter.DataTypes;
 
 namespace xml2json_converter.Parsers
 {
-    public class OfferItemsParser : XmlParser<OfferItem>
+    public class OfferItemsParser : XmlItemParser<OfferItem>
     {
         private PriceType[] PriceTypes { get; set; }
         private MapperConfiguration MapperConfig = new MapperConfiguration(cfg => cfg.CreateMap<PriceType, PriceItem>());

@@ -10,7 +10,7 @@ using xml2json_converter.Parsers;
 
 namespace xml2json_converter.Fillers
 {
-    public class PriceTypesParser : XmlParser<PriceType>
+    public class PriceTypesParser : XmlItemParser<PriceType>
     {
         public PriceTypesParser(XmlDocument xmlDocument) : base(xmlDocument)
         {
