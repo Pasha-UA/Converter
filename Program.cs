@@ -82,6 +82,9 @@ internal class Program
                     {
                         var outputFileWithPath = await Converter.Convert(inputFileName, outputFileName);
                         Log.Information($"File converted successfully and saved to {outputFileWithPath}");
+
+                        // rename input file
+                        RenameUsedInputFileInWorkingDirectory();
                         context.ExitCode = 0;
 
                         if (!convertOnly)
@@ -185,5 +188,19 @@ internal class Program
         GoogleCredential googleCredential = GoogleCredential.FromAccessToken(accessToken: "");
         return googleCredential;
     }
+
+    public static void RenameUsedInputFileInWorkingDirectory()
+    {
+
+        // Новое имя для файла после перемещения
+        string dataPath = Path.GetDirectoryName(Defaults.DefaultInputFileName);
+        string dateTime = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        string newFileName = $"{Path.GetFileName(Defaults.DefaultInputFileName)}_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.{Path.GetExtension(Defaults.DefaultInputFileName)}";
+        string newFilePath = Path.Combine(dataPath, newFileName);
+        // Переименование файла
+        File.Move(Defaults.DefaultInputFileName, newFilePath);
+        Log.Information("Input file renamed.");
+    }
 }
+
 
