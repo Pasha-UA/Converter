@@ -15,7 +15,7 @@ namespace ConverterProject
             // CreateDirectoryIfNotExists
             inputFileNameInStock ??= Defaults.DefaultInputFileName;
             outputFileName ??= Defaults.DefaultOutputFileName;
-            Defaults.EnsureDirectoryExists(Path.GetDirectoryName(inputFileNameInStock));
+            Service.EnsureDirectoryExists(Path.GetDirectoryName(inputFileNameInStock));
 
             var priceList = new yml_catalog(inputFileNameInStock);
 
