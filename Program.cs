@@ -8,7 +8,7 @@ using System.CommandLine.Parsing;
 internal class Program
 {
     private static IConfiguration Configuration { get; set; } = new ConfigurationBuilder()
-                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                 .SetBasePath(Defaults.AppDirectory)
                  .AddJsonFile(Defaults.DefaultSecretKeyFileName, optional: true, reloadOnChange: true)
                  .Build();
 
@@ -17,7 +17,7 @@ internal class Program
         // Subscribe to the CancelKeyPress event
         Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
 
-        Defaults.EnsureDirectoryExists(Defaults.LogsPath);
+        Service.EnsureDirectoryExists(Defaults.LogsPath);
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
             .WriteTo.Async(a => a.File(
@@ -84,7 +84,7 @@ internal class Program
                         Log.Information($"File converted successfully and saved to {outputFileWithPath}");
 
                         // rename input file
-                        RenameUsedInputFileInWorkingDirectory();
+                        Service.RenameUsedInputFileInWorkingDirectory();
                         context.ExitCode = 0;
 
                         if (!convertOnly)
@@ -187,19 +187,6 @@ internal class Program
     {
         GoogleCredential googleCredential = GoogleCredential.FromAccessToken(accessToken: "");
         return googleCredential;
-    }
-
-    public static void RenameUsedInputFileInWorkingDirectory()
-    {
-
-        // Новое имя для файла после перемещения
-        string dataPath = Path.GetDirectoryName(Defaults.DefaultInputFileName);
-        string dateTime = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        string newFileName = $"{Path.GetFileName(Defaults.DefaultInputFileName)}_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.{Path.GetExtension(Defaults.DefaultInputFileName)}";
-        string newFilePath = Path.Combine(dataPath, newFileName);
-        // Переименование файла
-        File.Move(Defaults.DefaultInputFileName, newFilePath);
-        Log.Information("Input file renamed.");
     }
 }
 
