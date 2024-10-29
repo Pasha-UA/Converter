@@ -37,6 +37,8 @@ namespace ConverterProject
                 // Проверка, существует ли файл в папке Downloads
                 if (File.Exists(sourceFilePath))
                 {
+                    if (!Directory.Exists(Defaults.BaseDataPath)) Directory.CreateDirectory(Defaults.BaseDataPath);
+                    
                     if (File.Exists(destinationFilePath))
                     {
                         try
@@ -65,8 +67,8 @@ namespace ConverterProject
             }
             catch (Exception ex)
             {
-                Log.Fatal($"Error: {ex.Message}");
-                Environment.Exit(-10);
+                Log.Fatal($"Error: {ex.Message}  {sourceFilePath}  {destinationFilePath}");
+                Environment.Exit(-10);  
             }
 
             return destinationFilePath;

@@ -16,7 +16,8 @@ namespace xml2json_converter
         {
             // Ensure input is not null
             if (input == null)
-                throw new ArgumentNullException(nameof(input));
+                // throw new ArgumentNullException(nameof(input));
+                return null;
 
             // Convert the input string to bytes
             byte[] bytes = Encoding.UTF8.GetBytes(input);
