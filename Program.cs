@@ -46,7 +46,8 @@ internal class Program
     {
         var rootCommand = new RootCommand();
 
-        var inputCmlNameOption = CreateOption<string>("--input", "File with input data", Defaults.DefaultInputFileName, "-i");
+        var defaultInputFileName = Defaults.DefaultInputFileName;
+        var inputCmlNameOption = CreateOption<string>("--input", "File with input data", defaultInputFileName, "-i");
         var outputXmlNameOption = CreateOption<string>("--output", "Output file name", Defaults.DefaultOutputFileName, "-o");
         var parametersOption = CreateOption<string>("--parameters", "File with import parameters", "params.json", "-p");
         var secretTokenOption = CreateOption<string>("--secret-token", $"Secret token for uploading file. Default token you can save in the '{Defaults.DefaultSecretKeyFileName}' file.", null, "-st");
@@ -68,7 +69,7 @@ internal class Program
 
         rootCommand.SetHandler(async (context) =>
                 {
-                    var inputFileName = context.ParseResult.GetValueForOption(inputCmlNameOption) ?? Defaults.DefaultInputFileName;
+                    var inputFileName = context.ParseResult.GetValueForOption(inputCmlNameOption) ?? defaultInputFileName;
                     var outputFileName = context.ParseResult.GetValueForOption(outputXmlNameOption) ?? Defaults.DefaultOutputFileName;
                     var parameters = context.ParseResult.GetValueForOption(parametersOption);
                     var convertOnly = context.ParseResult.GetValueForOption(convertOnlyOption);
@@ -94,8 +95,8 @@ internal class Program
                     }
                     else
                     {
-                        var inputFileWithPath = Path.GetFullPath(inputFileName);
-                        Log.Error($"File {inputFileWithPath} not found.");
+                        var inputFileWithPath = inputFileName != null ? Path.GetFullPath(inputFileName) : "";
+                        Log.Error($"Input file {inputFileWithPath} not found or no file specified.");
                         context.ExitCode = -1;
                     }
 

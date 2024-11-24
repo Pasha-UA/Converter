@@ -19,7 +19,7 @@ namespace ConverterProject
         /// Searches for input file from '{user}/Downloads' folder and moves it to 'Data' folder of the program
         /// Returns input file filename.
         /// </summary>
-        public static string GetInputFileFromDownloadsFolder()
+        public static string TryGetInputFileFromDownloadsFolder()
         {
             string downloadsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
@@ -60,9 +60,8 @@ namespace ConverterProject
                 }
                 else
                 {
-                    Log.Fatal("No input file. Run program with -h key for help.");
-                    Environment.Exit(-1);
-
+ //                   Log.Error("No input file. Run program with -h key for help.");
+                    return null; 
                 }
             }
             catch (Exception ex)
@@ -103,13 +102,15 @@ namespace ConverterProject
             {
                 try
                 {
-                    return Service.GetInputFileFromDownloadsFolder();
+                    return TryGetInputFileFromDownloadsFolder();
                 }
                 catch
                 {
-                    Log.Fatal($"Input file not found. Specify input file name using -i (or --input) command line key. Run program with -h key for help.");
-                    Log.Fatal("Program closed.");
-                    Environment.Exit(-3);
+                    return null;
+
+                    //Log.Fatal($"Input file not found. Specify input file name using -i (or --input) command line key. Run program with -h key for help.");
+                    //Log.Fatal("Program closed.");
+                    //Environment.Exit(-3);
                 }
             }
 
