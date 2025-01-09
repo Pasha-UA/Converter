@@ -78,29 +78,34 @@ internal class Program
 
                     Log.Information("New session started.");
 
-
-                    if (File.Exists(inputFileName))
+                    try
                     {
-                        var outputFileWithPath = await Converter.Convert(inputFileName, outputFileName);
-                        Log.Information($"File converted successfully and saved to {outputFileWithPath}");
-
-                        // rename input file
-                        Service.RenameUsedInputFileInWorkingDirectory();
-                        context.ExitCode = 0;
-
-                        if (!convertOnly)
+                        if (File.Exists(inputFileName))
                         {
-                            context.ExitCode = await Uploader.UploadData(outputFileName, GetSecretToken(secretToken));
+                            var outputFileWithPath = await Converter.Convert(inputFileName, outputFileName);
+                            Log.Information($"File converted successfully and saved to {outputFileWithPath}");
+
+                            // Rename input file
+                            Service.RenameUsedInputFileInWorkingDirectory();
+                            context.ExitCode = 0;
+
+                            if (!convertOnly)
+                            {
+                                context.ExitCode = await Uploader.UploadData(outputFileName, GetSecretToken(secretToken));
+                            }
+                        }
+                        else
+                        {
+                            var inputFileWithPath = inputFileName != null ? Path.GetFullPath(inputFileName) : "";
+                            Log.Error($"Input file {inputFileWithPath} not found or no file specified.");
+                            context.ExitCode = -1;
                         }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        var inputFileWithPath = inputFileName != null ? Path.GetFullPath(inputFileName) : "";
-                        Log.Error($"Input file {inputFileWithPath} not found or no file specified.");
+                        Log.Error($"An unexpected error occurred: {ex.Message}");
                         context.ExitCode = -1;
                     }
-
-                    // await WaitForEnterKeyPress();
                 });
 
         uploadCommand.SetHandler(async (context) =>
@@ -190,5 +195,3 @@ internal class Program
         return googleCredential;
     }
 }
-
-

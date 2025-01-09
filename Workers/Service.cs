@@ -22,56 +22,45 @@ namespace ConverterProject
         public static string TryGetInputFileFromDownloadsFolder()
         {
             string downloadsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-
-            // Имя файла, который нужно переместить
             string fileName = Defaults.DefaultInputFileNameWithoutPath;
-            // Полный путь к файлу в папке Downloads
             string sourceFilePath = Path.Combine(downloadsPath, fileName);
-
-            // Полный путь, куда нужно переместить файл
             string destinationFilePath = Path.Combine(Defaults.BaseDataPath, fileName);
-
 
             try
             {
-                // Проверка, существует ли файл в папке Downloads
-                if (File.Exists(sourceFilePath))
+                if (!File.Exists(sourceFilePath))
                 {
-                    if (!Directory.Exists(Defaults.BaseDataPath)) Directory.CreateDirectory(Defaults.BaseDataPath);
-                    
-                    if (File.Exists(destinationFilePath))
-                    {
-                        try
-                        {
-                            Service.RenameUsedInputFileInWorkingDirectory();
-                        }
-                        // rename destination file
-                        catch
-                        {
-                            Log.Error("Can't replace old input file with new one. Exiting");
-                            Environment.Exit(-1);
-                        }
-
-                    }
-                    // Перемещение файла
-                    File.Move(sourceFilePath, destinationFilePath);
-                    Log.Information("Input file successfully moved from 'Downloads' to the 'Data' folder.");
-
+                    Log.Error("Input file not found in Downloads folder.");
+                    return null;
                 }
-                else
+
+                EnsureDirectoryExists(Defaults.BaseDataPath);
+
+                if (File.Exists(destinationFilePath))
                 {
- //                   Log.Error("No input file. Run program with -h key for help.");
-                    return null; 
+                    RenameUsedInputFileInWorkingDirectory();
                 }
+
+                File.Move(sourceFilePath, destinationFilePath);
+                Log.Information("Input file successfully moved from 'Downloads' to the 'Data' folder.");
+            }
+            catch (IOException ioEx)
+            {
+                Log.Fatal($"IO Error: {ioEx.Message}  {sourceFilePath}  {destinationFilePath}");
+                Environment.Exit(-10);
+            }
+            catch (UnauthorizedAccessException uaEx)
+            {
+                Log.Fatal($"Access Error: {uaEx.Message}  {sourceFilePath}  {destinationFilePath}");
+                Environment.Exit(-10);
             }
             catch (Exception ex)
             {
-                Log.Fatal($"Error: {ex.Message}  {sourceFilePath}  {destinationFilePath}");
-                Environment.Exit(-10);  
+                Log.Fatal($"Unexpected Error: {ex.Message}  {sourceFilePath}  {destinationFilePath}");
+                Environment.Exit(-10);
             }
 
             return destinationFilePath;
-
         }
 
         public static void EnsureDirectoryExists(string path)
