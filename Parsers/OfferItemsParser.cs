@@ -136,9 +136,15 @@ namespace xml2json_converter.Parsers
             //var offersIds = offers.Select(p => p.Id);
             //var updatedOffersIds = updatedOffers.Select(p => p.Id);
             //var difference = offersIds.Except(updatedOffersIds);
-            offers = updatedOffers.OrderByDescending(offer=>offer.BarCode)
-                                    .ThenByDescending(offer=>offer.QuantityInStock)
-                                    .ToList();
+            offers = updatedOffers.OrderByDescending(offer => offer.BarCode)
+                      .ThenBy(offer => offer.RetailPrice == null && offer.QuantityInStock == 0 ? 2 : // null и 0 в самом конце
+                                       offer.RetailPrice == null ? 1 :                             // null, но есть остаток - ближе к началу
+                                       0)                                                         
+                      .ThenBy(offer => offer.RetailPrice < 1 ? 0 : 1)                              // < 1 вперед
+                      .ThenBy(offer => offer.RetailPrice)                                          // сортировка по цене
+                      .ThenBy(offer => offer.QuantityInStock == 0 ? 1 : 0)                         // 0 в конец
+                      .ThenByDescending(offer => offer.QuantityInStock)                                       
+                      .ToList();
 
             Log.Information("Filling product characteristics complete.");
 
