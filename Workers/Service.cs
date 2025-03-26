@@ -8,7 +8,7 @@ namespace ConverterProject
         {
             // Новое имя для файла после перемещения
             string dataPath = Path.GetDirectoryName(Defaults.DefaultInputFileName);
-            string newFileName = $"{Path.GetFileName(Defaults.DefaultInputFileName)}_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.{Path.GetExtension(Defaults.DefaultInputFileName)}";
+            string newFileName = $"{Path.GetFileNameWithoutExtension(Defaults.DefaultInputFileName)}_{DateTime.Now:yyyyMMdd_HHmmss}{Path.GetExtension(Defaults.DefaultInputFileName)}";
             string newFilePath = Path.Combine(dataPath, newFileName);
             // Переименование файла
             File.Move(Defaults.DefaultInputFileName, newFilePath);
