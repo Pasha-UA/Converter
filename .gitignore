@@ -7,3 +7,4 @@ publishprofiles/
 .vscode/
 log*.txt
 logs/
+publish/

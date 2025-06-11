@@ -52,7 +52,7 @@ internal class Program
         var parametersOption = CreateOption<string>("--parameters", "File with import parameters", "params.json", "-p");
         var secretTokenOption = CreateOption<string>("--secret-token", $"Secret token for uploading file. Default token you can save in the '{Defaults.DefaultSecretKeyFileName}' file.", null, "-st");
         var convertOnlyOption = CreateOption<bool>("--convert-only", "Convert file only. Do not upload", false, "-co");
-        var logDirectoryName = CreateOption<string>("--logs_path", "Log directory name", Defaults.LogsPath, "-lp");
+        var logDirectoryName = CreateOption<string>("--logs-path", "Log directory name", Defaults.LogsPath, "-lp");
 
         rootCommand.Add(inputCmlNameOption);
         rootCommand.Add(outputXmlNameOption);
