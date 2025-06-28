@@ -35,5 +35,7 @@ namespace ConverterProject
 
         public static string DefaultSecretKeyFileName => "secrets.json";
 
+        public static string DefaultApiUrl => "https://my.prom.ua/api/v1/products/import_file";
+
     }
 }

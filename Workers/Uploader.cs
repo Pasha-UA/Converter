@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -39,79 +40,79 @@ namespace ConverterProject
             public string[] Updated_fields { get; set; } = new[] { "quantity_in_stock", "sku", "price", "presence", "description", "name" };
         }
 
-        private static readonly string ApiUrl = "https://my.prom.ua/api/v1/products/import_file";
+        private static readonly string ApiUrl = Defaults.DefaultApiUrl;
+        // private static readonly string ApiUrl = "https://my.prom.ua/api/v1/products/import_file";
+        private static readonly HttpClient client = new HttpClient();
 
         public static async Task<int> UploadData(string fileName, string secretToken)
         {
             try
             {
-                using (HttpClient client = new HttpClient())
+                if (string.IsNullOrWhiteSpace(secretToken))
                 {
-                    var content = CreateMultipartContent(fileName);
-                    AddAuthorizationHeader(client, secretToken);
-
-                    // Console.Write("Uploading file to server... ");
-                    Log.Information("Uploading file to server...");
-
-                    var response = await client.PostAsync(new Uri(ApiUrl), content);
-                    return await HandleResponse(response);
+                    Log.Error("Secret token is missing. Cannot upload file.");
+                    return -1;
                 }
+
+                await using var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+                using var content = CreateMultipartContent(fileStream);
+
+                // Use a request message to set the per-request authorization header.
+                // This is safer than modifying the static client's DefaultRequestHeaders.
+                using var request = new HttpRequestMessage(HttpMethod.Post, ApiUrl)
+                {
+                    Content = content
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", secretToken);
+
+                Log.Information("Uploading file '{FileName}' to server...", Path.GetFileName(fileName));
+
+                var response = await client.SendAsync(request);
+                return await HandleResponse(response);
             }
             catch (HttpRequestException httpEx)
             {
-                // Console.ForegroundColor = ConsoleColor.Red;
-                // Console.WriteLine("Error: " + httpEx.Message);
-                // Console.ResetColor();
-                Log.Error($"HTTP Request Error: {httpEx.Message}");
+                Log.Error(httpEx, "An HTTP error occurred during file upload");
                 return -1;
             }
             catch (Exception ex)
             {
-                // Console.ForegroundColor = ConsoleColor.Red;
-                // Console.WriteLine("Error: " + ex.Message);
-                // Console.ResetColor();
-                Log.Error($"Unexpected Error: {ex.Message}");
+                Log.Error(ex, "An unexpected error occurred during file upload");
                 return -1;
             }
         }
 
-        private static MultipartFormDataContent CreateMultipartContent(string fileName)
+        private static MultipartFormDataContent CreateMultipartContent(Stream fileStream)
         {
-            byte[] fileBytes = File.ReadAllBytes(fileName);
-
             var serializerOptions = new JsonSerializerOptions
             {
                 IncludeFields = true,
                 WriteIndented = true,
                 PropertyNamingPolicy = new LowerCaseNamingPolicy(),
             };
-
             var importParameters = new ImportParameters();
             var jsonAttributes = JsonSerializer.Serialize(importParameters, serializerOptions);
 
             var content = new MultipartFormDataContent
             {
-                { new ByteArrayContent(fileBytes), "file", "import.xml" },
+                { new StreamContent(fileStream), "file", "import.xml" },
                 { new StringContent(jsonAttributes), "attributes" }
             };
 
             return content;
         }
 
-        private static void AddAuthorizationHeader(HttpClient client, string secretToken)
-        {
-            client.DefaultRequestHeaders.Add("Authorization", "Bearer " + secretToken);
-        }
-
         private static async Task<int> HandleResponse(HttpResponseMessage response)
         {
             if (response.IsSuccessStatusCode)
             {
-                Log.Information($"File upload to server successful. Result code: {response.StatusCode}");
+                Log.Information("File upload to server successful. Result code: {StatusCode}", response.StatusCode);
             }
             else
             {
-                Log.Warning($"File upload to server failed. Result code: {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Log.Warning("File upload to server failed. Result code: {StatusCode}. Response: {ErrorResponse}",
+                    response.StatusCode, errorContent);
             }
 
             return (int)response.StatusCode;
