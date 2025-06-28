@@ -86,7 +86,7 @@ internal class Program
                             Log.Information($"File converted successfully and saved to {outputFileWithPath}");
 
                             // Rename input file
-                            Service.RenameUsedInputFileInWorkingDirectory();
+                            Service.RenameUsedInputFileInWorkingDirectory(inputFileName);
                             context.ExitCode = 0;
 
                             if (!convertOnly)
@@ -103,7 +103,7 @@ internal class Program
                     }
                     catch (Exception ex)
                     {
-                        Log.Error($"An unexpected error occurred: {ex.Message}");
+                        Log.Error(ex, "An unexpected error occurred during conversion.");
                         context.ExitCode = -1;
                     }
                 });

@@ -1,4 +1,4 @@
-﻿namespace ConverterProject
+﻿﻿namespace ConverterProject
 {
     public class KeywordsAdder
     {
@@ -11,7 +11,8 @@
         private IEnumerable<Keyword> InitKeywordsFromFile()
         {
             var keywords = new List<Keyword>();
-            foreach (string line in System.IO.File.ReadLines(@"..\\..\\..\\Data\\export.csv"))
+            var keywordsFilePath = Path.Combine(Defaults.BaseDataPath, "export.csv");
+            foreach (string line in System.IO.File.ReadLines(keywordsFilePath))
             {
                 if (!string.IsNullOrEmpty(line))
                 {

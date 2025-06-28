@@ -4,14 +4,14 @@ namespace ConverterProject
 {
     public static class Service
     {
-        public static void RenameUsedInputFileInWorkingDirectory()
+        public static void RenameUsedInputFileInWorkingDirectory(string inputFileToRename)
         {
             // Новое имя для файла после перемещения
-            string dataPath = Path.GetDirectoryName(Defaults.DefaultInputFileName);
-            string newFileName = $"{Path.GetFileNameWithoutExtension(Defaults.DefaultInputFileName)}_{DateTime.Now:yyyyMMdd_HHmmss}{Path.GetExtension(Defaults.DefaultInputFileName)}";
+            string dataPath = Path.GetDirectoryName(inputFileToRename);
+            string newFileName = $"{Path.GetFileNameWithoutExtension(inputFileToRename)}_{DateTime.Now:yyyyMMdd_HHmmss}{Path.GetExtension(inputFileToRename)}";
             string newFilePath = Path.Combine(dataPath, newFileName);
             // Переименование файла
-            File.Move(Defaults.DefaultInputFileName, newFilePath);
+            File.Move(inputFileToRename, newFilePath);
             Log.Information("Input file renamed.");
         }
 
@@ -38,7 +38,7 @@ namespace ConverterProject
 
                 if (File.Exists(destinationFilePath))
                 {
-                    RenameUsedInputFileInWorkingDirectory();
+                    RenameUsedInputFileInWorkingDirectory(destinationFilePath);
                 }
 
                 File.Move(sourceFilePath, destinationFilePath);

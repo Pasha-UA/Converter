@@ -23,9 +23,9 @@ namespace xml2json_converter.Parsers
             {
                 ProductCategory item = new ProductCategory()
                 {
-                    Id = node.SelectNodes("Ид").Item(0).InnerText,
+                    Id = node.SelectNodes("Ид").Item(0)?.InnerText ?? string.Empty,
                     ParentId = node.SelectNodes("Родитель").Item(0)?.InnerText,
-                    Name = node.SelectNodes("Наименование").Item(0).InnerText
+                    Name = node.SelectNodes("Наименование").Item(0)?.InnerText ?? "Unnamed Category"
                 };
                 categories.Add(item);
                 Log.Information($"Category {item.Name} added.");

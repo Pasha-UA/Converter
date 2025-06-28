@@ -26,18 +26,19 @@ namespace ConverterProject
 
                 XmlSerializer serializer = new XmlSerializer(typeof(yml_catalog));
 
-                using (FileStream outputStream = new FileStream(outputFileName, FileMode.Create))
+                await using (FileStream outputStream = new FileStream(outputFileName, FileMode.Create))
                 {
                     XmlWriterSettings xmlWriterSettings = new XmlWriterSettings
                     {
                         Async = true,
                         Indent = true,
-                        Encoding = Encoding.UTF8
+                        Encoding = new UTF8Encoding(false) // Use encoderShouldEmitUTF8Identifier = false for compatibility
                     };
 
-                    using (XmlWriter xmlWriter = XmlWriter.Create(outputStream, xmlWriterSettings))
+                    await using (XmlWriter xmlWriter = XmlWriter.Create(outputStream, xmlWriterSettings))
                     {
                         serializer.Serialize(xmlWriter, priceList);
+                        await xmlWriter.FlushAsync();
                     }
                 }
 
@@ -46,7 +47,7 @@ namespace ConverterProject
             }
             catch (Exception ex)
             {
-                Log.Error($"An error occurred during conversion: {ex.Message}");
+                Log.Error(ex, "An error occurred during conversion.");
                 throw;
             }
         }
