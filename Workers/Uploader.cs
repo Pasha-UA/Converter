@@ -111,8 +111,25 @@ namespace ConverterProject
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
+                string errorMessage = errorContent; // Default to raw content
+
+                try
+                {
+                    using var jsonDoc = JsonDocument.Parse(errorContent);
+                    if (jsonDoc.RootElement.TryGetProperty("error", out var errorElement) &&
+                        errorElement.TryGetProperty("message", out var messageElement) &&
+                        messageElement.ValueKind == JsonValueKind.String)
+                    {
+                        errorMessage = messageElement.GetString();
+                    }
+                }
+                catch (JsonException)
+                {
+                    // It's not JSON or malformed, log the raw content.
+                }
+
                 Log.Warning("File upload to server failed. Result code: {StatusCode}. Response: {ErrorResponse}",
-                    response.StatusCode, errorContent);
+                    response.StatusCode, errorMessage);
             }
 
             return (int)response.StatusCode;

@@ -46,8 +46,7 @@ internal class Program
     {
         var rootCommand = new RootCommand();
 
-        var defaultInputFileName = Defaults.DefaultInputFileName;
-        var inputCmlNameOption = CreateOption<string>("--input", "File with input data", defaultInputFileName, "-i");
+        var inputCmlNameOption = CreateOption<string>("--input", "File with input data", null, "-i");
         var outputXmlNameOption = CreateOption<string>("--output", "Output file name", Defaults.DefaultOutputFileName, "-o");
         var parametersOption = CreateOption<string>("--parameters", "File with import parameters", "params.json", "-p");
         var secretTokenOption = CreateOption<string>("--secret-token", $"Secret token for uploading file. Default token you can save in the '{Defaults.DefaultSecretKeyFileName}' file.", null, "-st");
@@ -69,7 +68,13 @@ internal class Program
 
         rootCommand.SetHandler(async (context) =>
                 {
-                    var inputFileName = context.ParseResult.GetValueForOption(inputCmlNameOption) ?? defaultInputFileName;
+                    var inputFileName = context.ParseResult.GetValueForOption(inputCmlNameOption);
+                    // If no input file is specified via command line, find the default one.
+                    if (string.IsNullOrEmpty(inputFileName))
+                    {
+                        inputFileName = Service.GetDefaultInputFileName(null);
+                    }
+
                     var outputFileName = context.ParseResult.GetValueForOption(outputXmlNameOption) ?? Defaults.DefaultOutputFileName;
                     var parameters = context.ParseResult.GetValueForOption(parametersOption);
                     var convertOnly = context.ParseResult.GetValueForOption(convertOnlyOption);
@@ -80,7 +85,7 @@ internal class Program
 
                     try
                     {
-                        if (File.Exists(inputFileName))
+                        if (!string.IsNullOrEmpty(inputFileName) && File.Exists(inputFileName))
                         {
                             var outputFileWithPath = await Converter.Convert(inputFileName, outputFileName);
                             Log.Information($"File converted successfully and saved to {outputFileWithPath}");
@@ -96,7 +101,7 @@ internal class Program
                         }
                         else
                         {
-                            var inputFileWithPath = inputFileName != null ? Path.GetFullPath(inputFileName) : "";
+                            var inputFileWithPath = !string.IsNullOrEmpty(inputFileName) ? Path.GetFullPath(inputFileName) : "";
                             Log.Error($"Input file {inputFileWithPath} not found or no file specified.");
                             context.ExitCode = -1;
                         }
