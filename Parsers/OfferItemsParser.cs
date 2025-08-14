@@ -35,6 +35,7 @@ namespace xml2json_converter.Parsers
             // второй проход. Заполнение оставшихся полей товара.
             Log.Information("Filling product characteristics ...");
             var goodsXml = this.RootNode.SelectSingleNode("ПакетПредложений/Товары").ChildNodes;
+            // пустой список для обновленных товаров
             var updatedOffers = new List<OfferItem>();
 
             var keywords = new KeywordsAdder().Keywords;
@@ -106,7 +107,8 @@ namespace xml2json_converter.Parsers
                     // если есть только оптовая(ые) цена(ы) и нет розничной, то тип продажи 'w' (wholesale)
                     // если есть только розничная цена и нет оптовых, то тип продажи 'r' (retail)
                     // Check if there are both wholesale and retail prices or neither wholesale and retail
-                    if (item.PriceItems != null && item.RetailPrice != null || item.PriceItems == null && item.RetailPrice == null)
+                    if (item.PriceItems != null && item.RetailPrice != null
+                        || item.PriceItems == null && item.RetailPrice == null)
                     {
                         item.SellingType = "u"; // Universal
                     }
@@ -133,6 +135,8 @@ namespace xml2json_converter.Parsers
 
                 updatedOffers.Add(item);
             }
+
+
             //var offersIds = offers.Select(p => p.Id);
             //var updatedOffersIds = updatedOffers.Select(p => p.Id);
             //var difference = offersIds.Except(updatedOffersIds);
@@ -143,7 +147,27 @@ namespace xml2json_converter.Parsers
 
             Log.Information("Filling product characteristics complete.");
 
-            return offers.ToArray();
+            var result = offers.ToArray();
+
+            // Дополнительный проход для обработки разновидностей
+            var grouped = result.Where(x => !string.IsNullOrEmpty(x.GroupId))
+                                .GroupBy(x => x.GroupId);
+
+            foreach (var group in grouped)
+            {
+                // Проверяем, есть ли хотя бы одна разновидность с selling_type == "u"
+                if (group.Any(x => x.SellingType == "u"))
+                {
+                    foreach (var item in group)
+                    {
+                        item.SellingType = "u";
+                    }
+                }
+            }
+
+            return result;
+
+
         }
 
         private List<PriceItem> ParsePricesForItem(XmlNode pricesNodeXml)
