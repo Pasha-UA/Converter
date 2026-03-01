@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using System.Text; // needed for console encoding
 
 internal class Program
 {
@@ -14,6 +15,10 @@ internal class Program
 
     private static async Task<int> Main(string[] args)
     {
+        // Set console encoding to UTF-8 for input/output
+        Console.OutputEncoding = Encoding.UTF8;
+        Console.InputEncoding = Encoding.UTF8;
+
         // Subscribe to the CancelKeyPress event
         Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
 
